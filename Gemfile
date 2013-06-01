@@ -7,6 +7,11 @@ gem 'bootstrap-sass', '2.1'
 # gem 'rails', :git => 'git://github.com/rails/rails.git'
 
 gem 'pg', '0.12.2'
+gem 'bcrypt-ruby', '3.0.1'
+
+group :developmnet do
+  gem 'annotate', '2.5.0'
+end
 
 group :development, :test do
   gem 'rspec-rails', '2.11.0'
