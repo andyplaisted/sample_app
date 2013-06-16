@@ -19,6 +19,10 @@ describe "Authentication" do
       
       it { should have_selector('title', text: 'Sign in') }
       it { should have_error_message('Invalid') }
+      it { should_not have_link('Users') }
+      it { should_not have_link('Profile') }
+      it { should_not have_link('Settings') }
+      it { should_not have_link('Sign out') }
       
       describe "after visiting another page" do
         before { click_link "Home" }
@@ -40,7 +44,12 @@ describe "Authentication" do
       
       describe "followed by signout" do
         before { click_link "Sign out" }
+        
         it { should have_link('Sign in') }
+        it { should_not have_link('Users', href: users_path) }
+        it { should_not have_link('Profile', href: user_path(user)) }
+        it { should_not have_link('Settings', href: edit_user_path(user)) }
+        it { should_not have_link('Sign out', href: signout_path) }
       end
     end
   end
@@ -56,15 +65,25 @@ describe "Authentication" do
         describe "when attempting to visit a protected page" do
           before do 
             visit edit_user_path(user)
-            fill_in "Email", with: user.email
-            fill_in "Password", with: user.password
-            click_button "Sign in"
+            valid_signin user
           end
           
           describe "after signing in" do
             
             it "should render the desired protected page" do
               page.should have_selector('title', text: 'Edit user')
+            end
+          
+            describe "when signing in again" do
+              before do
+                delete signout_path
+                visit signin_path
+                valid_signin user
+              end
+          
+              it "should render the default (profile) page" do
+                page.should have_selector('title', text: user.name)
+              end
             end
           end
         end
@@ -94,7 +113,7 @@ describe "Authentication" do
       let(:wrong_user) {FactoryGirl.create(:user, email: "wrong@example.com") }
       before { valid_signin user }
       
-      describe "visiting Useres#edit page" do
+      describe "visiting Users#edit page" do
         before { visit edit_user_path(wrong_user) }
         it { should_not have_selector('title', text: full_title('Edit user')) }
       end
@@ -114,6 +133,30 @@ describe "Authentication" do
       describe "submitting a DELETE request to the Users#destroy action" do
         before { delete user_path(user) }
         specify { response.should redirect_to(root_path) }
+      end
+    end
+  
+    describe "as signed-in user" do
+      let(:user) { FactoryGirl.create(:user) }
+      before { valid_signin user }
+      
+      describe "should not allow access to 'new' user path" do
+        before { get new_user_path }
+        specify { response.should redirect_to(root_path) }
+      end
+      
+      describe "using 'create' action" do
+        before { post users_path }
+        specify { response.should redirect_to(root_path) }
+      end
+    end
+    
+    describe "as admin user" do
+      let(:admin) { FactoryGirl.create(:admin) }
+      before { valid_signin admin }
+      
+      it "should not allow admin to delete themselves" do
+        expect { delete user_path(admin) }.to_not change(User, :count).by(-1)
       end
     end
   end    
