@@ -111,6 +111,25 @@ require 'spec_helper'
         it { should have_content(m1.content) }
         it { should have_content(m2.content) }
         it { should have_content(user.microposts.count) }
+        
+        it "should paginate microposts" do
+          Micropost.paginate(page: 1).each do |micropost|
+            page.should have_selector('li', text: micropost.content)
+          end
+        end
+        
+        
+        describe "no delete for wrong user" do
+          let(:wrong_user) { FactoryGirl.create(:user, email: "wrong@example.com") }
+          before do
+            FactoryGirl.create(:micropost, user: wrong_user, content: "Lorem ipsum")
+            FactoryGirl.create(:micropost, user: wrong_user, content: "dolar sit amet")
+            visit user_path(wrong_user)
+          end
+          
+          it { should_not have_link('Delete') }
+          
+        end         
       end
     end
   

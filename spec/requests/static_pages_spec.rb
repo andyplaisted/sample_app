@@ -29,6 +29,15 @@ describe "Static pages" do
           page.should have_selector("li##{item.id}", text: item.content)
         end
       end
+  
+      it { should have_content(user.microposts.count) }
+      it { should have_content("micropost".pluralize(user.microposts.count)) }
+      
+      it "should paginate microposts" do
+        Micropost.paginate(page: 1).each do |micropost|
+          page.should have_selector('li', text: micropost.content)
+        end
+      end    
     end
   end
 
