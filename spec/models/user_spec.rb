@@ -227,5 +227,12 @@ describe User do
       it { should_not be_following(other_user) }
       its(:followed_users) { should_not include(other_user) }
     end
+    
+    describe "should destroy relationships after delete" do
+      before { @user.destroy }
+      
+      its (:relationships) { should be_empty }
+      its (:reverse_relationships) { should be_empty }
+    end
   end
 end
